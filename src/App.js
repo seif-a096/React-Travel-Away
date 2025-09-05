@@ -8,17 +8,31 @@ let initialItems = [
 ];
 
 function App() {
-  let [items, setItems] = useState([]);
+  let [items, setItems] = useState([...initialItems]);
   let handleAddedItem = function (item) {
     setItems((items) => [...items, item]);
   };
-
+  function handlePacked(id) {
+    setItems((items) =>
+      items.map((item) =>
+        id === item.id ? { ...item, packed: !item.packed } : { ...item }
+      )
+    );
+  }
+  let count = items.length;
+  let packed = items.reduce((acc, item) => (item.packed ? ++acc : acc), 0);
+  let percentage = Math.round((packed / count) * 100);
   return (
     <div className="app">
       <Logo />
       <Form handleAdd={handleAddedItem} />
-      <PackingList items={items} manipulateItems={setItems} />
-      <Stats />
+      <PackingList
+        items={items}
+        manipulateItems={setItems}
+        handlePacked={handlePacked}
+        setItems={setItems}
+      />
+      <Stats count={count} packed={packed} percentage={percentage} />
     </div>
   );
 }
@@ -32,7 +46,7 @@ function Form({ handleAdd }) {
   let options = new Array(20).fill(0);
   function handleSubmit(e) {
     e.preventDefault();
-    let newItem = { description, quantity, packad: false, id: Date.now() };
+    let newItem = { description, quantity, packed: false, id: Date.now() };
     handleAdd(newItem);
     setInput("");
     setOption(1);
@@ -62,37 +76,112 @@ function Form({ handleAdd }) {
     </form>
   );
 }
-function PackingList({ items, manipulateItems }) {
+function PackingList({ items, manipulateItems, handlePacked, setItems }) {
+  function handleClear() {
+    let confirm = window.confirm("Are you sure you wanna delete everything ?");
+    if (confirm) setItems([]);
+  }
+  let [sortOption, setSortoption] = useState("Order");
+  let sortedItems;
+  switch (sortOption) {
+    case "Order": {
+      sortedItems = items.slice().sort((a, b) => a.id - b.id);
+
+      break;
+    }
+    case "alphabetically": {
+      sortedItems = items
+        .slice()
+        .sort((a, b) => a.description.localeCompare(b.description));
+
+      break;
+    }
+    case "Packed": {
+      sortedItems = items.slice().sort((a, b) => -+a.packed + +b.packed);
+
+      break;
+    }
+
+    default:
+      break;
+  }
+
   return (
     <div className="list">
       <ul>
-        {items.map((i, index) => (
-          <Item item={i} key={index} manipulateItems={manipulateItems} />
+        {sortedItems.map((i, index) => (
+          <Item
+            item={i}
+            key={index}
+            manipulateItems={manipulateItems}
+            handlePacked={handlePacked}
+          />
         ))}
       </ul>
+      <div className="actions">
+        <select
+          className={items.length === 0 ? "empty-list" : ""}
+          value={sortOption}
+          onChange={(e) => setSortoption(e.target.value)}
+        >
+          <option value="Order">Sort by Insertion Order</option>
+          <option value="alphabetically">alphabetical order </option>
+          <option value="Packed">Packed First</option>
+        </select>
+        <button
+          className={items.length === 0 ? "empty-list" : ""}
+          onClick={handleClear}
+        >
+          Clear List
+        </button>
+      </div>
     </div>
   );
 }
-function Stats() {
+function Stats({ count, packed, percentage }) {
+  if (count === 0)
+    return (
+      <p
+        style={{
+          display: "inline-block",
+          width: "100%",
+          background: "#f03e3e",
+          textAlign: "center",
+        }}
+        className="footer"
+      >
+        <em>Start adding items to your packing list⏳</em>
+      </p>
+    );
   return (
     <footer>
-      <em>👜You have X items on your list, and you've already packed X(X%)</em>
+      <em
+        style={{ width: "100%", textAlign: "center", display: "inline-block" }}
+        className={percentage === 100 ? "all-done" : "pending"}
+      >
+        {percentage === 100
+          ? `You've got everything, Ready to go✈️`
+          : `👜You have ${count} items on your list, and you've already packed ${packed}(${percentage}%)`}
+      </em>
     </footer>
   );
 }
-function Item({ item, manipulateItems }) {
+function Item({ item, manipulateItems, handlePacked }) {
   function handleRemove(id) {
     manipulateItems((items) => items.filter((i) => i.id !== id));
   }
   return (
     <li>
+      <input
+        type="checkbox"
+        checked={item.packed}
+        onChange={() => handlePacked(item.id)}
+      />
       <span style={item.packed ? { textDecoration: "line-through" } : {}}>
         {" "}
         {item.quantity} {item.description}
       </span>
-      <button className="btn" onClick={() => handleRemove(item.id)}>
-        ❌
-      </button>
+      <button onClick={() => handleRemove(item.id)}>❌</button>
     </li>
   );
 }

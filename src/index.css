@@ -366,3 +366,14 @@ input[type="checkbox"] {
     margin-right: 0;
   }
 }
+.all-done {
+  background-color: #4aa087;
+}
+/* 2f9e44 */
+.pending {
+  background-color: #f59f00;
+}
+.empty-list {
+  pointer-events: none;
+  opacity: 0.5;
+}
