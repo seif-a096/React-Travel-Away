@@ -60,7 +60,7 @@ function Form({ handleAdd }) {
         required
       >
         {options.map((_, i) => (
-          <option value={i + 2} key={i}>
+          <option value={i + 1} key={i}>
             {i + 1}
           </option>
         ))}
